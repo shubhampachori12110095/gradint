@@ -1,0 +1,18 @@
+#!/bin/bash
+export PATH="/usr/local/bin:$PATH" # for python3 override + in case lame etc is there
+cd "${BASH_SOURCE%/*}/../.." # needed on macOS 14, possibly 13
+if sw_vers 2>/dev/null|grep ^ProductVersion.*1[2-9]; then # macOS 12+
+  if test $(python3 -c 'import tkinter,sys;print(sys.version_info[:3]>=(3,10,1))' 2>/dev/null) = "True"; then exec python3 gradint.py; fi
+  osascript -e "tell application (path to frontmost application as text) to display dialog \"macOS 12 bundled a broken version of the GUI libraries: please install Python 3 from python.org before running Gradint\" buttons {\"OK\"} with icon stop"
+  exec open http://www.python.org/download/mac/
+fi
+export VERSIONER_PYTHON_PREFER_32_BIT=1 # for Tk patch to work in 10.6
+export TK_SILENCE_DEPRECATION=1 # 11.4
+if [ -e /usr/lib/libtk.dylib ] || [ -e /usr/lib/tkConfig.sh ] || [ -e /usr/local/lib/tkConfig.sh ] || [ -e /usr/bin/tkcon ]; then
+# run using only the Tk windows:
+cd "$(echo $0 | sed -e 's|start-gradint.app/Contents/MacOS/start-gradint.*$||')"
+exec pythonw gradint.py
+else
+# run in Terminal:
+open -a Terminal.app "$(echo $0 | sed -e 's|start-gradint.app/Contents/MacOS/start-gradint.*$|gradint.py|')"
+fi
